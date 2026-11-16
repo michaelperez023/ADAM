@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "adam-study"
+version = "1.0.0"
+description = "Adam and AdaMax implemented in PyTorch and compared on MNIST."
+readme = "README.md"
+license = "MIT AND BSD-3-Clause"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+authors = [{ name = "Michael Perez" }]
+requires-python = ">=3.10"
+dependencies = [
+    "matplotlib>=3.7",
+    "numpy>=1.24",
+    # PyTorch's last Intel macOS wheels (2.2.2) were built against NumPy 1.x.
+    "numpy<2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "torch>=2.2",
+    "torchvision>=0.17",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+notebook = ["ipykernel", "nbconvert"]
+
+[project.urls]
+Repository = "https://github.com/michaelperez023/ADAM"
+
+[tool.hatch.build.targets.wheel]
+packages = ["adam_study"]
+
+[tool.hatch.build.targets.sdist]
+include = ["adam_study", "tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "C4", "UP", "SIM", "PT", "NPY", "RUF"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

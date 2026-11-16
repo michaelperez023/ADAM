@@ -1,0 +1,30 @@
+# MNIST is downloaded here on first use
+data/
+Data/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+
+# Tools
+.ipynb_checkpoints/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Partial writes of results.json
+*.tmp
+
+# Output of the README examples
+results-*/
+
+# OS
+.DS_Store
