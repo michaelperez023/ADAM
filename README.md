@@ -121,65 +121,8 @@ decay, and that they work with `state_dict()`/`load_state_dict()` and
 Runs with the same seed start from the same initial weights and see the same minibatches
 and dropout masks, so at a given seed the two optimizers differ only in their updates.
 
-These are the settings the 2022 runs actually used (see below). Both optimizers share one
+The models and hyperparameters are the ones the 2022 runs used. Both optimizers share one
 step size; the paper suggests 0.002 for AdaMax, and no hyperparameters were tuned.
-
-## What changed since 2022
-
-The 2022 slides report one run per configuration, without a seed. Next to the new results
-(mean ± standard deviation over five seeds):
-
-| Model | Dropout | Adam, 2022 | Adam, now | AdaMax, 2022 | AdaMax, now |
-|---|---|---|---|---|---|
-| Logistic regression | none | 92.69 | 92.73 ± 0.04 | 92.38 | 92.44 ± 0.04 |
-| MLP | none | 98.17 | 98.22 ± 0.22 | 98.33 | 98.31 ± 0.03 |
-| MLP | 0.2 | 98.43 | 98.08 ± 0.20 | 98.14 | 98.35 ± 0.05 |
-| CNN | none | 99.21 | 99.09 ± 0.15 | 99.09 | 99.17 ± 0.08 |
-| CNN | 0.2 | 99.21 | 99.23 ± 0.10 | 99.09 | 99.23 ± 0.11 |
-
-Without dropout, every 2022 value lies within the range of the five new runs, which is
-consistent with run-to-run variation. With dropout, three of the four 2022 values lie
-outside it, but the 2022 code also tested the dropout models with dropout still active.
-Retrained and tested that way ([results/dropout_eval.md](results/dropout_eval.md)), the
-new runs lose on average about 0.1 points of accuracy on the CNN (0.12 with Adam, 0.10
-with AdaMax) and less on the MLP (0.04 and 0.03). Tested with dropout on, the five new CNN
-runs span both 2022 CNN values. On the MLP with dropout, the 2022 Adam value is above and
-the AdaMax value below every new run, whichever way the runs are tested, and outside all
-100 single test passes of the new runs with dropout on (97.77 to 98.32 for Adam, 98.22 to
-98.48 for AdaMax). The new runs do not account for that ranking, and with one unseeded run
-per configuration its cause cannot be checked. Overall, the 2022 slides had Adam ahead in
-four of the five configurations; with five seeds, Adam is ahead on average only for
-logistic regression.
-
-Four problems in the 2022 code are fixed. Run-to-run variation is consistent with the
-differences without dropout; testing with dropout on lowered the dropout results by 0.03
-to 0.12 points on average; the other two problems affected only the plots.
-
-- **The runs were unseeded.** Each configuration ran once without a seed, so a single run
-  could not show whether a difference was larger than run-to-run variation, which reaches
-  a standard deviation of 0.22 points (MLP with Adam). Every configuration now runs with
-  five seeds and the results are reported as mean ± standard deviation.
-- **Dropout was active at test time.** The models were never switched to evaluation
-  mode, so the dropout runs were tested with 20% of the units of the last hidden layer
-  randomly dropped. Evaluation now runs with `model.eval()`.
-- **The loss curves were single minibatches.** Each point in the 2022 plots was the loss
-  of the last minibatch of an epoch, which is noisy. The curves now show the mean training
-  loss over each epoch and the loss on the test set.
-- **The two-curve comparison plots were misaligned.** The Adam vs AdaMax and dropout vs
-  no dropout plots drew both series with one `plt.plot(x, a, b)` call, which plots `b`
-  against 0, 1, 2, ... instead of `x`, so the second curve was shifted one epoch to the
-  left. None of the plots had legends.
-
-The proposal planned an alpha / sqrt(t) step-size decay and an L2 penalty, but neither
-took effect in 2022: the decayed step size was computed in each training loop but never
-reached the optimizer (the one run that passed it, logistic regression with Adam, had it
-ignored by `step()`), and the penalty weight was 0. The 2022 numbers therefore come from a
-constant step size and no penalty, which is what the default grid keeps. Both are
-available as options (`--schedule inv_sqrt` and `--weight-decay`). The proposal also
-described a three-stage CNN with a 1000-unit layer and a hyperparameter grid search; the
-2022 code used the two-stage CNN above and fixed hyperparameters, and this version keeps
-that design. The 2022 CNN defined a third convolutional layer that its forward pass never
-used; it did not affect the results and has been removed.
 
 ## Usage
 
@@ -279,9 +222,12 @@ docs/              course proposal and final presentation
 [docs/proposal.pdf](docs/proposal.pdf) and [docs/slides.pdf](docs/slides.pdf) are the
 original course proposal (October 2022) and final presentation (December 2022). The
 proposal uses the ICML LaTeX template, so it carries that template's conference footer; it
-was a course document, not a conference submission. The slides describe the 2022 code, so
-their results and plots have the problems listed above; the proposal describes the planned
-experiments, which differ from that code as noted above.
+was a course document, not a conference submission. The slides describe the 2022 code:
+each accuracy in them comes from one unseeded run, which is not enough to rank the two
+optimizers reliably, and the dropout models were tested with dropout still active. In
+their loss plots, each point is the loss of the last minibatch of an epoch, and where two
+curves are compared, the second is shifted one epoch to the left. The proposal describes
+the planned experiments, which differ from the ones under [Experiments](#experiments).
 
 Slides 3 and 4 show Algorithms 1 and 2 of Kingma & Ba (2015) as restated in the proposal.
 The MNIST samples on slide 6 are a scaled-down copy of
